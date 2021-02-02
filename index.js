@@ -1,10 +1,12 @@
-const HALF_STEP = 0.5;
+const {
+  HALF_STEP,
+  FLAT_KEYS,
+  VALUE_TO_NOTE,
+  NOTE_TO_VALUE,
+} = require("./constants");
 
 const MAJOR_THIRD = HALF_STEP * 4;
 const MINOR_THIRD = HALF_STEP * 3;
-
-const SHARP_KEYS = ["c", "g", "d", "a", "e", "b", "f#", "c#", "g#", "d#", "a#"];
-const FLAT_KEYS = ["c", "f", "bb", "eb", "ab", "dd", "gb"];
 
 const MAJOR_SCALE = {
   0: 0, // 1
@@ -17,60 +19,43 @@ const MAJOR_SCALE = {
   7: 0, // 8
 };
 
-const NOTE_TO_VALUE = {
-  c: 0,
-  "c#": 0.5,
-  d: 1,
-  "d#": 1.5,
-  e: 2,
-  f: 2.5,
-  "f#": 3,
-  g: 3.5,
-  "g#": 4,
-  a: 4.5,
-  "a#": 5,
-  b: 5.5,
+const getNoteByValue = (value, pitch = "natural") => {
+  const notes = VALUE_TO_NOTE[value % 6];
+  const note = notes[pitch];
+  return note ? note : notes.natural;
 };
 
-const VALUE_TO_NOTE = {
-  0: "c",
-  0.5: "c#",
-  1: "d",
-  1.5: "d#",
-  2: "e",
-  2.5: "f",
-  3: "f#",
-  3.5: "g",
-  4: "g#",
-  4.5: "a",
-  5: "a#",
-  5.5: "b",
+const getValueByNote = (note) => {
+  return NOTE_TO_VALUE[note];
 };
 
-const getNoteByValue = (value) => {
-  return VALUE_TO_NOTE[value % 6];
+const getPitch = (note) => {
+  return FLAT_KEYS.includes(note) ? "flat" : "sharp";
+};
+
+const getNoteByScaleDegree = (key, degree) => {
+  return buildMajorScale(key)[(degree % 7) - 1];
 };
 
 const buildMajorScale = (key) => {
-  return Object.values(MAJOR_SCALE).map((degree) =>
-    getNoteByValue(NOTE_TO_VALUE[key] + degree)
-  );
-};
+  const keyValue = getValueByNote(key);
+  const pitch = getPitch(key);
 
-const getNoteByKeyDegree = (key, degree) => {
-  return buildMajorScale(key)[(degree % 7) - 1];
+  return Object.values(MAJOR_SCALE).map((degree) => {
+    const noteValue = (keyValue + degree) % 6;
+    return getNoteByValue(noteValue, pitch);
+  });
 };
 
 const triad = (note, type) => {
   const scale = buildMajorScale(note);
 
   let thirdValue = NOTE_TO_VALUE[scale[2]];
+  let fifthValue = NOTE_TO_VALUE[scale[4]];
 
   if (type === "minor" || type === "diminished") {
     thirdValue = NOTE_TO_VALUE[note] + MINOR_THIRD;
   }
-
-  let fifthValue = NOTE_TO_VALUE[scale[4]];
 
   if (type === "diminished") {
     fifthValue = thirdValue + MINOR_THIRD;
@@ -80,18 +65,24 @@ const triad = (note, type) => {
     fifthValue = thirdValue + MAJOR_THIRD;
   }
 
-  return [scale[0], getNoteByValue(thirdValue), getNoteByValue(fifthValue)];
+  const pitch = getPitch(note);
+  return [
+    note,
+    getNoteByValue(thirdValue, pitch),
+    getNoteByValue(fifthValue, pitch),
+  ];
 };
 
 const seventhChord = (note, type) => {
-  const triad = triad(note, type);
+  const chord = triad(note, type);
+  const pitch = getPitch(note);
 
-  const fifth = NOTE_TO_VALUE[triad[triad.length - 1]];
-  let seventh = getNoteByValue(fifth + MINOR_THIRD);
+  const fifth = NOTE_TO_VALUE[chord[chord.length - 1]];
+  let seventh = getNoteByValue(fifth + MINOR_THIRD, pitch);
 
   if (type === "major") {
-    seventh = getNoteByValue(fifth + MAJOR_THIRD);
+    seventh = getNoteByValue(fifth + MAJOR_THIRD, pitch);
   }
 
-  return [...triad, seventh];
+  return [...chord, seventh];
 };
