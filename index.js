@@ -37,6 +37,16 @@ const getNoteByScaleDegree = (key, degree) => {
   return buildMajorScale(key)[(degree % 7) - 1];
 };
 
+const getInversion = (chord, inversion) => {
+  const firstInversion = [...chord.slice(1), chord[0]];
+
+  if (inversion === "second") {
+    return [...firstInversion.slice(1), firstInversion[0]];
+  }
+
+  return firstInversion;
+};
+
 const buildMajorScale = (key) => {
   const keyValue = getValueByNote(key);
   const pitch = getPitch(key);
