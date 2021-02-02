@@ -38,13 +38,17 @@ const getNoteByScaleDegree = (key, degree) => {
 };
 
 const getInversion = (chord, inversion) => {
-  const firstInversion = [...chord.slice(1), chord[0]];
-
-  if (inversion === "second") {
-    return [...firstInversion.slice(1), firstInversion[0]];
+  if (inversion === 0) {
+    return chord;
   }
 
-  return firstInversion;
+  let result = chord;
+
+  for (let i = 1; i <= inversion % chord.length; i++) {
+    result = [...result.slice(1), result[0]];
+  }
+
+  return result;
 };
 
 const buildMajorScale = (key) => {
